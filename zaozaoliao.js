@@ -1,4 +1,3 @@
-
 // ==UserScript==
 // @name         zzl
 // @namespace    http://tampermonkey.net/
@@ -13,6 +12,7 @@
 (function () {
     'use strict';
     const $ = window.$ || $;
+    const log = console.log.bind(console)
 
     const oldReplaceState = history.replaceState;
     history.replaceState = function replaceState(...args) {
@@ -25,14 +25,13 @@
     class ZaoZaoLiao {
         constructor() {
             this.timer = null;
-            this.interval = 1000;
             this.locker = false;
+            this.interval = 1000;
         }
 
         _addGlobalEvent() {
             window.addEventListener('locationchange', () => {
-                console.log('location changed');
-                this.handleLocationChange()
+                this.handleLocationChange();
             });
         }
 
@@ -58,9 +57,9 @@
             const file_name = $('h4:first').text().trim();
             const $link = document.createElement('a');
 
-            console.log(`正在下载: ${file_name}`);
+            log(`正在下载: ${file_name}`);
 
-            const data = await fetch(src)
+            return await fetch(src)
                 .then(res => res.blob())
                 .then(blob => {
                     const url = window.URL.createObjectURL(blob);
@@ -77,8 +76,6 @@
                 .catch(ex => {
                     throw new Error(`文件下载失败 ${ex}`);
                 });
-
-            return data;
         }
 
         async checkVideoLoadedStat() {
@@ -96,13 +93,16 @@
 
         async startDownload() {
             const video_loaded = await this.checkVideoLoadedStat();
+
             if (video_loaded) {
                 if (!this._getLocker()) {
-                    console.log('当前任务未下载完成...');
+                    log('当前任务未下载完成...');
                     return;
                 }
+
                 const { file_name } = await this.downloadVideo();
                 alert(`${file_name}下载完成`);
+
                 this._releaseLock();
             }
         }
